@@ -7,8 +7,11 @@
  */
 
 const path = require('path');
+const fs = require('fs');
+const mongoose = require('mongoose');
 const pino = require('pino');
 const qrcode = require('qrcode');
+const WhatsAppSession = require('../models/WhatsAppSession');
 
 let baileysSock = null;
 let baileysStatus = 'disconnected'; // 'disconnected' | 'qr_ready' | 'open'
@@ -51,12 +54,74 @@ const recordNotification = (type, recipient, message, status, meta = {}) => {
 };
 
 /**
+ * Helper: Restore Baileys auth files from MongoDB (allows Render to persist session across restarts)
+ */
+const restoreSessionFromMongo = async (authDir) => {
+  try {
+    if (!fs.existsSync(authDir)) {
+      fs.mkdirSync(authDir, { recursive: true });
+    }
+
+    // If mongoose is still connecting, wait a short moment
+    if (mongoose.connection.readyState === 2) {
+      await new Promise((resolve) => {
+        mongoose.connection.once('connected', resolve);
+        setTimeout(resolve, 4000);
+      });
+    }
+
+    if (mongoose.connection.readyState === 1) {
+      const savedFiles = await WhatsAppSession.find({});
+      if (savedFiles && savedFiles.length > 0) {
+        console.log(`[WhatsApp Web] Restoring ${savedFiles.length} session credentials from MongoDB...`);
+        for (const doc of savedFiles) {
+          const filePath = path.join(authDir, doc.fileName);
+          fs.writeFileSync(filePath, doc.content, 'utf8');
+        }
+        console.log('✅ [WhatsApp Web] Session restored successfully from MongoDB!');
+        return true;
+      }
+    }
+  } catch (err) {
+    console.warn('[WhatsApp Web Mongo Restore Notice]:', err.message);
+  }
+  return false;
+};
+
+/**
+ * Helper: Persist Baileys auth files into MongoDB (survives Render re-deploys & sleep)
+ */
+const syncSessionToMongo = async (authDir) => {
+  try {
+    if (mongoose.connection.readyState !== 1 || !fs.existsSync(authDir)) return;
+    const files = fs.readdirSync(authDir);
+    for (const fileName of files) {
+      const filePath = path.join(authDir, fileName);
+      if (fs.statSync(filePath).isFile()) {
+        const content = fs.readFileSync(filePath, 'utf8');
+        await WhatsAppSession.findOneAndUpdate(
+          { fileName },
+          { fileName, content, updatedAt: new Date() },
+          { upsert: true }
+        );
+      }
+    }
+  } catch (err) {
+    console.warn('[WhatsApp Web Mongo Sync Notice]:', err.message);
+  }
+};
+
+/**
  * Initialize Baileys WhatsApp Web client
  */
 const initBaileys = async () => {
   try {
     const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
     const authDir = path.join(__dirname, '..', 'session_auth');
+
+    // Attempt to restore saved session from MongoDB before reading filesystem
+    await restoreSessionFromMongo(authDir);
+
     const { state, saveCreds } = await useMultiFileAuthState(authDir);
 
     baileysSock = makeWASocket({
@@ -74,7 +139,7 @@ const initBaileys = async () => {
         baileysStatus = 'qr_ready';
         try {
           baileysQrDataUrl = await qrcode.toDataURL(qr);
-          console.log('[WhatsApp Web] New QR Code generated. Scan at: http://localhost:5000/api/whatsapp/scan');
+          console.log('[WhatsApp Web] New QR Code generated. Scan at /api/whatsapp/scan');
         } catch (qrErr) {
           console.error('[WhatsApp Web] QR render error:', qrErr.message);
         }
@@ -87,6 +152,9 @@ const initBaileys = async () => {
         baileysConnectedUser = baileysSock.user?.id ? baileysSock.user.id.split(':')[0] : 'Connected';
         console.log(`\n✅ [WhatsApp Web Connected!] Logged in as +${baileysConnectedUser}`);
         console.log('Automated WhatsApp order confirmations and status updates are now LIVE!\n');
+
+        // Persist fresh session to MongoDB so Render never asks to re-scan on restart
+        await syncSessionToMongo(authDir);
       }
 
       if (connection === 'close') {
@@ -98,11 +166,22 @@ const initBaileys = async () => {
           setTimeout(initBaileys, 3000);
         } else {
           baileysConnectedUser = null;
+          // User logged out from WhatsApp mobile — clear MongoDB session
+          try {
+            if (mongoose.connection.readyState === 1) {
+              await WhatsAppSession.deleteMany({});
+            }
+          } catch (delErr) {
+            console.warn('[WhatsApp Session Clear Notice]:', delErr.message);
+          }
         }
       }
     });
 
-    baileysSock.ev.on('creds.update', saveCreds);
+    baileysSock.ev.on('creds.update', async () => {
+      await saveCreds();
+      await syncSessionToMongo(authDir);
+    });
   } catch (err) {
     console.warn('[WhatsApp Web] Baileys init notice:', err.message);
   }
@@ -114,9 +193,10 @@ initBaileys();
 /**
  * Dispatch message via active provider:
  * 1. Real WhatsApp Web (Baileys) if connected
- * 2. Meta WhatsApp Cloud API (if configured)
- * 3. Twilio (if configured)
- * 4. Local Simulator & Audit Log
+ * 2. Twilio WhatsApp API (Cloud Reliable, No QR needed)
+ * 3. CallMeBot WhatsApp API (100% Free Cloud Alternative)
+ * 4. Meta WhatsApp Business Cloud API (if configured)
+ * 5. Local Simulator & Audit Log
  */
 const dispatchMessage = async (recipientPhone, messageBody, metadata = {}) => {
   const formattedPhone = formatPhoneNumber(recipientPhone);
@@ -138,7 +218,61 @@ const dispatchMessage = async (recipientPhone, messageBody, metadata = {}) => {
     }
   }
 
-  // 2. Meta WhatsApp Cloud API (if configured)
+  // 2. Twilio WhatsApp API (Cloud Reliable, No QR needed)
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
+    try {
+      const accountSid = process.env.TWILIO_ACCOUNT_SID;
+      const authToken = process.env.TWILIO_AUTH_TOKEN;
+      const fromNumber = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
+      const toNumber = `whatsapp:${formattedPhone}`;
+      const authHeader = 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64');
+      const params = new URLSearchParams();
+      params.append('From', fromNumber.startsWith('whatsapp:') ? fromNumber : `whatsapp:${fromNumber}`);
+      params.append('To', toNumber);
+      params.append('Body', messageBody);
+
+      const twilioRes = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params.toString(),
+      });
+      const twilioData = await twilioRes.json();
+      if (twilioRes.ok) {
+        console.log(`[Twilio WhatsApp Sent] Message delivered to ${formattedPhone} (SID: ${twilioData.sid})`);
+        const entry = recordNotification(metadata.type || 'Order', formattedPhone, messageBody, 'SENT_TWILIO', {
+          messageId: twilioData.sid,
+        });
+        return { success: true, provider: 'twilio', messageId: twilioData.sid, record: entry };
+      } else {
+        console.error('[Twilio WhatsApp Error]:', twilioData.message || twilioData);
+      }
+    } catch (twErr) {
+      console.error('[Twilio Dispatch Error]:', twErr.message);
+    }
+  }
+
+  // 3. CallMeBot WhatsApp API (100% Free Cloud Alternative)
+  if (process.env.CALLMEBOT_API_KEY) {
+    try {
+      const apiKey = process.env.CALLMEBOT_API_KEY;
+      const url = `https://api.callmebot.com/whatsapp.php?phone=${cleanDigits}&text=${encodeURIComponent(messageBody)}&apikey=${apiKey}`;
+      const cmbRes = await fetch(url);
+      if (cmbRes.ok) {
+        console.log(`[CallMeBot WhatsApp Sent] Message delivered to ${formattedPhone}`);
+        const entry = recordNotification(metadata.type || 'Order', formattedPhone, messageBody, 'SENT_CALLMEBOT');
+        return { success: true, provider: 'callmebot', record: entry };
+      } else {
+        console.error('[CallMeBot HTTP Error]: status', cmbRes.status);
+      }
+    } catch (cmbErr) {
+      console.error('[CallMeBot Error]:', cmbErr.message);
+    }
+  }
+
+  // 4. Meta WhatsApp Cloud API (if configured)
   if (process.env.WHATSAPP_CLOUD_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
     try {
       const response = await fetch(
@@ -165,9 +299,9 @@ const dispatchMessage = async (recipientPhone, messageBody, metadata = {}) => {
     }
   }
 
-  // 3. Fallback: Formatted Simulation Log
+  // 5. Fallback: Formatted Simulation Log
   console.log('\n' + '='.repeat(65));
-  console.log('📱 [WHATSAPP AUTOMATED NOTIFICATION DISPATCHED]');
+  console.log('📱 [WHATSAPP NOTIFICATION LOGGED]');
   console.log(`To: ${formattedPhone} [Role: ${metadata.recipientRole || 'Recipient'}]`);
   console.log(`Event: ${metadata.type || 'Order Notification'}`);
   console.log(`Timestamp: ${new Date().toLocaleTimeString()}`);
@@ -309,10 +443,23 @@ _Thank you for choosing Nexora!_ 🛍️`;
  * Get current WhatsApp Web connection status & QR code
  */
 const getWhatsAppStatus = () => {
+  let activeProvider = 'simulator';
+  if (baileysSock && baileysStatus === 'open') activeProvider = 'baileys';
+  else if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) activeProvider = 'twilio';
+  else if (process.env.CALLMEBOT_API_KEY) activeProvider = 'callmebot';
+  else if (process.env.WHATSAPP_CLOUD_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) activeProvider = 'meta_cloud';
+
   return {
     status: baileysStatus,
     qrDataUrl: baileysQrDataUrl,
     connectedUser: baileysConnectedUser,
+    activeProvider,
+    providers: {
+      baileys: { connected: baileysStatus === 'open', user: baileysConnectedUser },
+      twilio: Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN),
+      callmebot: Boolean(process.env.CALLMEBOT_API_KEY),
+      metaCloud: Boolean(process.env.WHATSAPP_CLOUD_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID),
+    },
     totalDispatched: recentNotifications.length,
   };
 };

@@ -103,7 +103,23 @@ app.get('/api/whatsapp/scan', (req, res) => {
         <h1>📱 WhatsApp Automated Sender</h1>
         <p>Link your WhatsApp to send real order receipts, tracking, and cancellation alerts directly to all customers.</p>
 
-        ${status.status === 'open' ? `
+        ${status.activeProvider === 'twilio' ? `
+          <div class="badge-connected" style="background: rgba(242, 47, 70, 0.15); color: #f22f46; border-color: #f22f46;">
+            <span>● Twilio WhatsApp Cloud API Active</span>
+          </div>
+          <p style="color: #25d366; font-size: 0.95rem; font-weight: 600;">
+            ✅ Automated background messaging is ACTIVE via Twilio!<br/>
+            Order receipts and updates are dispatched directly to customers.
+          </p>
+        ` : status.activeProvider === 'callmebot' ? `
+          <div class="badge-connected">
+            <span>● CallMeBot WhatsApp API Active</span>
+          </div>
+          <p style="color: #25d366; font-size: 0.95rem; font-weight: 600;">
+            ✅ Automated background messaging is ACTIVE via CallMeBot!<br/>
+            Order receipts and updates are dispatched directly to your WhatsApp.
+          </p>
+        ` : status.status === 'open' ? `
           <div class="badge-connected">
             <span>● Connected: +${status.connectedUser || 'Active'}</span>
           </div>
@@ -111,6 +127,9 @@ app.get('/api/whatsapp/scan', (req, res) => {
             ✅ Automated background messaging is ACTIVE!<br/>
             All customer orders will automatically receive WhatsApp receipts from this number without opening any browser tabs.
           </p>
+          <div class="instructions" style="margin-top: 16px;">
+            <p style="color: #25d366; font-size: 0.85rem;">🔒 <strong>Session Saved to Database:</strong> Your WhatsApp connection is stored in MongoDB Atlas, so it persists across Render restarts!</p>
+          </div>
         ` : status.qrDataUrl ? `
           <div class="badge-waiting">Scan QR code with your phone</div>
           <div class="qr-box">
@@ -124,6 +143,9 @@ app.get('/api/whatsapp/scan', (req, res) => {
               <li>Tap <strong>Link a Device</strong></li>
               <li>Scan the QR code shown above!</li>
             </ol>
+            <p style="margin-top: 10px; font-size: 0.78rem; color: #8696a0;">
+              ✨ <em>Once scanned, your session is saved to MongoDB Atlas so you never have to scan again after Render restarts!</em>
+            </p>
           </div>
         ` : `
           <div class="badge-waiting">Generating fresh QR code...</div>

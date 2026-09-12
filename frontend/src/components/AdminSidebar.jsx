@@ -67,7 +67,7 @@ const AdminSidebar = () => {
         })}
 
         <a
-          href="http://localhost:5000/api/whatsapp/scan"
+          href="/api/whatsapp/scan"
           target="_blank"
           rel="noreferrer"
           className="admin-nav-item whatsapp-link"
