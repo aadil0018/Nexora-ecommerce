@@ -1,0 +1,20 @@
+# Backend environment variables
+.env
+.env.*
+*.env
+!*.env.example
+
+# Dependencies
+node_modules/
+
+# WhatsApp Baileys session data
+session_auth/
+baileys_store.json
+baileys_auth_info/
+
+# Local database cache
+data_db/
+*.db
+
+# Logs
+*.log
