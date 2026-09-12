@@ -51,7 +51,7 @@ const Footer = () => {
           }}
         >
           {/* Brand */}
-          <div style={{ gridColumn: 'span 2' }}>
+          <div className="footer-brand" style={{ gridColumn: 'span 2' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
               <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
                 <rect width="32" height="32" rx="8" fill="#4f6ef7" />

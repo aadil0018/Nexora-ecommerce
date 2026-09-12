@@ -547,3 +547,140 @@ select option {
 .card, .glass-panel, .btn, .form-control, .badge, .toast, header, footer {
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
 }
+
+/* ============================================================
+   MOBILE RESPONSIVENESS — Comprehensive breakpoints
+   ============================================================ */
+
+/* ---------- Tablet & Small Screens (max-width: 768px) ---------- */
+@media (max-width: 768px) {
+  /* Typography scaling */
+  h1 { font-size: 1.4rem !important; }
+  h2 { font-size: 1.2rem !important; }
+  h3 { font-size: 1.05rem !important; }
+
+  /* Page section padding */
+  .container {
+    padding: 0 14px;
+  }
+
+  /* Buttons */
+  .btn { padding: 9px 16px; font-size: 0.83rem; }
+  .btn-lg { padding: 11px 20px; font-size: 0.88rem; }
+  .btn-sm { padding: 6px 12px; font-size: 0.78rem; }
+
+  /* Cards */
+  .card {
+    border-radius: var(--radius-md);
+    padding: 18px !important;
+  }
+
+  /* Product grid */
+  .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  /* Section headers */
+  .section-header { margin-bottom: 16px; }
+  .section-header h2 { font-size: 1.15rem; }
+
+  /* Tables - horizontal scroll */
+  .clean-table { font-size: 0.8rem; display: block; overflow-x: auto; white-space: nowrap; }
+  .clean-table th { padding: 8px 10px; font-size: 0.7rem; }
+  .clean-table td { padding: 10px; }
+
+  /* Toast position */
+  .toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+  }
+  .toast {
+    min-width: unset;
+    max-width: 100%;
+    font-size: 0.82rem;
+    padding: 12px 14px;
+  }
+
+  /* Form */
+  .form-group { margin-bottom: 14px; }
+  .form-control { padding: 9px 12px; font-size: 0.84rem; }
+
+  /* Products filter sidebar — hide on mobile, show mobile trigger */
+  .products-sidebar {
+    display: none !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 85vw !important;
+    max-width: 340px;
+    height: 100vh;
+    z-index: 500;
+    overflow-y: auto;
+    border-radius: 0 !important;
+    box-shadow: var(--shadow-xl);
+  }
+  .products-sidebar.mobile-open {
+    display: flex !important;
+  }
+
+  /* Show mobile filter button */
+  #mobile-filter-btn { display: inline-flex !important; }
+
+  /* Footer brand — stack on mobile */
+  .footer-brand {
+    grid-column: span 1 !important;
+  }
+
+  /* Navbar height reduce */
+  header .container {
+    height: 56px !important;
+  }
+}
+
+/* ---------- Small phones (max-width: 640px) ---------- */
+@media (max-width: 640px) {
+  h1 { font-size: 1.25rem !important; }
+  h2 { font-size: 1.1rem !important; }
+
+  .container {
+    padding: 0 12px;
+  }
+
+  /* Product grid — 2 columns on small phones */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* ---------- Extra small phones (max-width: 480px) ---------- */
+@media (max-width: 480px) {
+  h1 { font-size: 1.15rem !important; }
+  h2 { font-size: 1rem !important; }
+  h3 { font-size: 0.95rem !important; }
+
+  .container {
+    padding: 0 10px;
+  }
+
+  .btn { padding: 8px 14px; font-size: 0.8rem; }
+  .btn-lg { padding: 10px 18px; font-size: 0.85rem; }
+
+  .card {
+    padding: 14px !important;
+    border-radius: var(--radius-sm);
+  }
+
+  .form-control { padding: 8px 10px; font-size: 0.82rem; }
+
+  /* Product grid — 2 columns still, tighter */
+  .product-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  /* Badges */
+  .badge { font-size: 0.6rem; padding: 2px 8px; }
+}

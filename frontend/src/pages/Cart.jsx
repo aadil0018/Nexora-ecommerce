@@ -69,14 +69,14 @@ const Cart = () => {
 
       <div
         style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          display: 'flex',
+          flexWrap: 'wrap',
           gap: '36px',
           alignItems: 'flex-start',
         }}
       >
         {/* Cart Items List */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', gridColumn: 'span 2' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', flex: '1 1 400px', minWidth: 0 }}>
           {cart.items.map((item) => {
             const product = item.product;
             if (!product) return null;
@@ -208,6 +208,8 @@ const Cart = () => {
             gap: '20px',
             position: 'sticky',
             top: '96px',
+            flex: '0 1 340px',
+            minWidth: '280px',
           }}
         >
           <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>Order Summary</h3>
