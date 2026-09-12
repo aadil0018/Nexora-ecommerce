@@ -90,25 +90,45 @@ const restoreSessionFromMongo = async (authDir) => {
 
 /**
  * Helper: Persist Baileys auth files into MongoDB (survives Render re-deploys & sleep)
+ * Uses bulkWrite for high-speed single round-trip persistence
  */
+let syncTimer = null;
+
 const syncSessionToMongo = async (authDir) => {
   try {
     if (mongoose.connection.readyState !== 1 || !fs.existsSync(authDir)) return;
     const files = fs.readdirSync(authDir);
-    for (const fileName of files) {
-      const filePath = path.join(authDir, fileName);
-      if (fs.statSync(filePath).isFile()) {
-        const content = fs.readFileSync(filePath, 'utf8');
-        await WhatsAppSession.findOneAndUpdate(
-          { fileName },
-          { fileName, content, updatedAt: new Date() },
-          { upsert: true }
-        );
-      }
+    const operations = files
+      .map((fileName) => {
+        const filePath = path.join(authDir, fileName);
+        if (fs.statSync(filePath).isFile()) {
+          const content = fs.readFileSync(filePath, 'utf8');
+          return {
+            updateOne: {
+              filter: { fileName },
+              update: { $set: { fileName, content, updatedAt: new Date() } },
+              upsert: true,
+            },
+          };
+        }
+        return null;
+      })
+      .filter(Boolean);
+
+    if (operations.length > 0) {
+      await WhatsAppSession.bulkWrite(operations, { ordered: false });
+      console.log(`[WhatsApp Web] Successfully backed up ${operations.length} session keys to MongoDB Atlas.`);
     }
   } catch (err) {
     console.warn('[WhatsApp Web Mongo Sync Notice]:', err.message);
   }
+};
+
+const triggerDebouncedSync = (authDir) => {
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    syncSessionToMongo(authDir);
+  }, 1200);
 };
 
 /**
@@ -180,7 +200,7 @@ const initBaileys = async () => {
 
     baileysSock.ev.on('creds.update', async () => {
       await saveCreds();
-      await syncSessionToMongo(authDir);
+      triggerDebouncedSync(authDir);
     });
   } catch (err) {
     console.warn('[WhatsApp Web] Baileys init notice:', err.message);
