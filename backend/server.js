@@ -145,6 +145,20 @@ app.use('/api/*', (req, res) => {
   });
 });
 
+// Serve frontend static build if present (Production full-stack single deploy)
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
+app.use(express.static(frontendDistPath));
+
+app.get('*', (req, res, next) => {
+  if (req.originalUrl.startsWith('/api')) {
+    return next();
+  }
+  const indexHtml = path.join(frontendDistPath, 'index.html');
+  res.sendFile(indexHtml, (err) => {
+    if (err) next();
+  });
+});
+
 // Centralized error handling
 app.use(errorHandler);
 

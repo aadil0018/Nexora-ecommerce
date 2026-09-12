@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "description": "AI-Powered Personalized E-Commerce Recommendation and Shopping Assistant",
   "scripts": {
+    "build": "npm --prefix backend install && npm --prefix frontend install && npm --prefix frontend run build",
+    "start": "node backend/server.js",
     "install:all": "cd backend && npm install && cd ../frontend && npm install",
     "seed": "cd backend && npm run seed",
     "dev:backend": "cd backend && npm run dev",
