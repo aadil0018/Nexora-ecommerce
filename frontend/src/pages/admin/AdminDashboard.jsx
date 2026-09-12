@@ -46,19 +46,19 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <div style={{ display: 'flex', minHeight: 'calc(100vh - 72px)' }}>
+    <div className="container admin-layout" style={{ padding: '32px 0 80px', display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
       <AdminSidebar />
 
-      <div style={{ flex: 1, padding: '36px', overflowX: 'hidden' }}>
+      <div className="admin-content" style={{ flex: 1, minWidth: 0 }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+        <div className="admin-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px', flexWrap: 'wrap', gap: '16px' }}>
           <div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>Operations & AI Metrics</h1>
             <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
               Real-time platform telemetry, orders, inventory performance, and AI inference audit.
             </p>
           </div>
-          <button onClick={fetchDashboardData} className="btn btn-secondary btn-sm">
+          <button onClick={fetchDashboardData} className="btn btn-secondary btn-sm" style={{ flexShrink: 0 }}>
             <RefreshCw size={14} /> Refresh Data
           </button>
         </div>
@@ -69,6 +69,7 @@ const AdminDashboard = () => {
           <>
             {/* Top Stat Cards Grid */}
             <div
+              className="admin-stats-grid"
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
@@ -150,7 +151,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Recent Orders & Top Selling Products */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+            <div className="admin-two-col-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px', marginBottom: '32px' }}>
               {/* Recent Orders Card */}
               <div className="card" style={{ padding: '24px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>

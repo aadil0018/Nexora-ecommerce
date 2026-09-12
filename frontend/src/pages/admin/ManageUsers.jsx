@@ -51,10 +51,10 @@ const ManageUsers = () => {
   };
 
   return (
-    <div className="container" style={{ padding: '32px 0 80px', display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+    <div className="container admin-layout" style={{ padding: '32px 0 80px', display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
       <AdminSidebar />
 
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <div className="admin-content" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div>
           <h1 style={{ fontSize: '1.8rem', fontWeight: 800 }}>User Management Directory</h1>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>

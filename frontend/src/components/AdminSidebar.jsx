@@ -22,31 +22,35 @@ const AdminSidebar = () => {
   ];
 
   return (
-    <aside
-      className="card"
-      style={{
-        width: '240px',
-        padding: '20px 12px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '20px',
-        height: 'fit-content',
-        position: 'sticky',
-        top: '84px',
-      }}
-    >
+    <aside className="card admin-sidebar">
       {/* Header */}
-      <div style={{ padding: '0 10px' }}>
-        <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-          Admin Console
-        </h3>
-        <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-          Manage your store
-        </p>
+      <div className="admin-sidebar-header">
+        <div>
+          <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+            Admin Console
+          </h3>
+          <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+            Manage your store
+          </p>
+        </div>
+        <Link
+          to="/"
+          className="admin-mobile-back-btn"
+          style={{
+            display: 'none',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '0.8rem',
+            color: 'var(--text-muted)',
+            fontWeight: 500,
+          }}
+        >
+          <ArrowLeft size={14} /> Store
+        </Link>
       </div>
 
       {/* Nav Items */}
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+      <nav className="admin-nav-list">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -54,18 +58,7 @@ const AdminSidebar = () => {
               key={item.path}
               to={item.path}
               end={item.exact}
-              style={({ isActive }) => ({
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '9px 12px',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '0.84rem',
-                fontWeight: isActive ? 600 : 500,
-                color: isActive ? 'var(--primary)' : 'var(--text-secondary)',
-                background: isActive ? 'var(--primary-light)' : 'transparent',
-                transition: 'all 0.15s ease',
-              })}
+              className={({ isActive }) => `admin-nav-item ${isActive ? 'active' : ''}`}
             >
               <Icon size={17} />
               <span>{item.label}</span>
@@ -77,28 +70,15 @@ const AdminSidebar = () => {
           href="http://localhost:5000/api/whatsapp/scan"
           target="_blank"
           rel="noreferrer"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '9px 12px',
-            borderRadius: 'var(--radius-sm)',
-            fontSize: '0.84rem',
-            fontWeight: 600,
-            color: '#25d366',
-            background: 'rgba(37, 211, 102, 0.08)',
-            border: '1px solid rgba(37, 211, 102, 0.25)',
-            textDecoration: 'none',
-            marginTop: '4px',
-          }}
+          className="admin-nav-item whatsapp-link"
         >
           <MessageCircle size={17} />
-          <span>WhatsApp QR Link</span>
+          <span>WhatsApp QR</span>
         </a>
       </nav>
 
-      {/* Back to Store */}
-      <div style={{ marginTop: 'auto', paddingTop: '14px', borderTop: '1px solid var(--border-subtle)' }}>
+      {/* Back to Store (Desktop) */}
+      <div className="admin-sidebar-footer">
         <Link
           to="/"
           style={{

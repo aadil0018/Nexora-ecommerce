@@ -154,6 +154,7 @@ const Navbar = () => {
               Nexora
             </span>
             <span
+              className="navbar-brand-subtitle"
               style={{
                 fontSize: '0.6rem',
                 color: 'var(--text-muted)',
@@ -243,6 +244,7 @@ const Navbar = () => {
             <div ref={dropdownRef} style={{ position: 'relative' }}>
               <button
                 onClick={() => setProfileOpen((prev) => !prev)}
+                className="navbar-user-btn"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -269,12 +271,13 @@ const Navbar = () => {
                     color: '#fff',
                     fontWeight: 700,
                     fontSize: '0.8rem',
+                    flexShrink: 0,
                   }}
                 >
                   {user.name ? user.name[0].toUpperCase() : 'U'}
                 </div>
-                <span>{user.name.split(' ')[0]}</span>
-                <ChevronDown size={14} color="var(--text-muted)" />
+                <span className="navbar-username">{user.name.split(' ')[0]}</span>
+                <ChevronDown size={14} color="var(--text-muted)" className="navbar-chevron" />
               </button>
 
               {profileOpen && (

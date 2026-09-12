@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { User, History, Trash2, Package, Heart, CheckCircle2, Shield } from 'lucide-react';
+import { User, History, Trash2, Package, Heart, CheckCircle2, Shield, Eye, EyeOff } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../context/AuthContext';
@@ -14,6 +14,7 @@ const Profile = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [browsingHistory, setBrowsingHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -84,7 +85,7 @@ const Profile = () => {
   }
 
   return (
-    <div className="container" style={{ padding: '32px 0 80px', maxWidth: '1000px' }}>
+    <div className="container profile-container" style={{ padding: '32px 0 80px', maxWidth: '1000px' }}>
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>Account & Preferences</h1>
         <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
@@ -92,7 +93,7 @@ const Profile = () => {
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '32px', marginBottom: '48px' }}>
+      <div className="profile-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: '24px', marginBottom: '48px' }}>
         {/* User Card */}
         <div className="card" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -108,13 +109,14 @@ const Profile = () => {
                 fontSize: '1.5rem',
                 fontWeight: 800,
                 color: '#fff',
+                flexShrink: 0,
               }}
             >
               {user.name ? user.name[0].toUpperCase() : 'U'}
             </div>
-            <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800 }}>{user.name}</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{user.email}</p>
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.name}</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</p>
               <span className={`badge ${user.role === 'admin' ? 'badge-primary' : 'badge-ai'}`} style={{ marginTop: '6px' }}>
                 {user.role === 'admin' ? 'Administrator' : 'Verified Customer'}
               </span>
@@ -161,13 +163,34 @@ const Profile = () => {
 
           <div className="form-group">
             <label className="form-label">Change Password (leave blank to keep current)</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="form-control"
-            />
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="form-control"
+                style={{ paddingRight: '42px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: 0,
+                }}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button type="submit" disabled={updating} className="btn btn-primary" style={{ width: '100%', marginTop: '6px' }}>
@@ -178,7 +201,7 @@ const Profile = () => {
 
       {/* Browsing History Section (Personalization basis) */}
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <History size={20} color="var(--accent-cyan)" />
             <h3 style={{ fontSize: '1.3rem', fontWeight: 800 }}>
@@ -197,6 +220,7 @@ const Profile = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
+                flexShrink: 0,
               }}
             >
               <Trash2 size={15} /> Clear History

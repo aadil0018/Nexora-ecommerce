@@ -149,7 +149,7 @@ const ProductModal = ({ isOpen, onClose, product, onSave }) => {
       }}
     >
       <div
-        className="card"
+        className="card modal-card"
         style={{
           width: '100%',
           maxWidth: '740px',
@@ -192,7 +192,7 @@ const ProductModal = ({ isOpen, onClose, product, onSave }) => {
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="modal-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
               <label className="form-label">Brand *</label>
               <input
@@ -221,7 +221,7 @@ const ProductModal = ({ isOpen, onClose, product, onSave }) => {
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+          <div className="modal-grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
             <div className="form-group">
               <label className="form-label">Price (₹) *</label>
               <input
